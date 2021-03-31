@@ -108,29 +108,36 @@ void PrintFrameBuffer(FrameBuffer *fb, int offsetX, int offsetY)
         }
     }
 }
-void RasterizeTriange(FrameBuffer *fb, const Vec2 *v1, const Vec2 *v2, const Vec2 *v3)
+void RasterizeTriange(FrameBuffer *fb, const Vec2 *vv1, const Vec2 *vv2, const Vec2 *vv3)
 {
     int minX, maxX,
         minY, maxY;
 
+    int halfWidth = fb->width / 2, halfHeight = fb->height / 2;
+    Vec2 v1 = {.x = vv1->x * halfWidth + halfWidth, .y = -vv1->y * halfHeight + halfHeight};
+    Vec2 v2 = {.x = vv2->x * halfWidth + halfWidth, .y = -vv2->y * halfHeight + halfHeight};
+    Vec2 v3 = {.x = vv3->x * halfWidth + halfWidth, .y = -vv3->y * halfHeight + halfHeight};
+
     //max because u dont want to go below 0
-    minX = MAX(0, MIN(v1->x, MIN(v2->x, v3->x)));   
-    minY = MAX(0, MIN(v1->y, MIN(v2->y, v3->y)));
+    minX = MAX(0, MIN(v1.x, MIN(v2.x, v3.x)));   
+    minY = MAX(0, MIN(v1.y, MIN(v2.y, v3.y)));
 
     //clamp to rect bounds
-    maxX = MIN(fb->width, ceil( MAX(v1->x, MAX(v2->x, v3->x)) +1));
-    maxY = MIN(fb->height, ceil( MAX(v1->y, MAX(v2->y, v3->y)) + 1));
+    maxX = MIN(fb->width, ceil( MAX(v1.x, MAX(v2.x, v3.x)) +1));
+    maxY = MIN(fb->height, ceil( MAX(v1.y, MAX(v2.y, v3.y)) + 1));
 
     for(int y = minY; y < maxY; y++)
     {
         for(int x = minX; x < maxX; x++)
         {
-            if(PointInTriangle(x, y, v1, v2, v3))
+            if(PointInTriangle(x, y, &v1, &v2, &v3))
             {
                 SetPixelFrameBuffer(fb, x, y, '#', 0);
             }
+#ifdef DEBUG
             else
                 SetPixelFrameBuffer(fb, x, y, '.', 0);
+#endif
         }
     }
 }

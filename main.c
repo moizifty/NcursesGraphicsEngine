@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <ncurses.h>
-
 #include "GraphicsMath/graphicsmath.h"
 #include "rasterizer.h"
 
@@ -15,8 +14,11 @@ main(void)
     initscr();
     raw();
     noecho();
+    curs_set(0);
+    start_color();
+    cbreak();
 
-    FrameBuffer *fb = RasterizerInit(WinWidth, WinHeight);
+    FrameBuffer *fb = RasterizerInit(WinWidth / 2, WinHeight / 2);
 
     float angle = 0;
 
@@ -37,12 +39,11 @@ main(void)
         //ScaleMatrix44(&transform, &scale);
         RotateMatrix44(&transform, &rotateAxis, DegToRad(-angle));
 
-        Vec4 v4a = {0, 0, 1, 1};
-        Vec4 v4b = {50, 0, 1, 1};
-        Vec4 v4c = {25, 50, 1, 1};
+        Vec4 v4a = {-1, 1, 1, 1};
+        Vec4 v4b = {1, 1, 1, 1};
+        Vec4 v4c = {0, -1, 1, 1};
 
         Vec4 v4ar, v4br, v4cr;
-
         MultMatrix44Vec4(&transform, &v4a, &v4ar);
         MultMatrix44Vec4(&transform, &v4b, &v4br);
         MultMatrix44Vec4(&transform, &v4c, &v4cr);
@@ -54,9 +55,9 @@ main(void)
                         &(Vec2){v4cr.x, v4cr.y});
 
         PrintFrameBuffer(fb, 0, 0);
-        getch();
-        clear();
-        angle += 5;
+        refresh();
+        erase();
+        angle += 0.05f;
     }
 
     RasterizerFree(&fb);

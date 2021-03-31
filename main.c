@@ -39,7 +39,7 @@ main(void)
         //ScaleMatrix44(&transform, &scale);
         RotateMatrix44(&transform, &rotateAxis, DegToRad(-angle));
 
-        Vec4 v4a = {-1, 1, 1, 1};
+        Vec4 v4a = {-1, 2, 1, 1};
         Vec4 v4b = {1, 1, 1, 1};
         Vec4 v4c = {0, -1, 1, 1};
 
@@ -54,7 +54,7 @@ main(void)
                         &(Vec2){v4br.x, v4br.y},
                         &(Vec2){v4cr.x, v4cr.y});
 
-        PrintFrameBuffer(fb, 0, 0);
+        PrintFrameBuffer(fb);
         refresh();
         erase();
         angle += 0.05f;

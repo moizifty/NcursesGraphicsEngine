@@ -26,7 +26,7 @@ void ClearFrameBuffer(FrameBuffer *fb, int clearColor);
 void SetPixelFrameBuffer(FrameBuffer *fb, int posX, int posY, ColorBuffer color, DepthBuffer depth);
 ColorBuffer GetPixelColorFrameBuffer(FrameBuffer *fb, int posX, int posY);
 DepthBuffer GetPixelDepthFrameBuffer(FrameBuffer *fb, int posX, int posY);
-void PrintFrameBuffer(FrameBuffer *fb, int offsetX, int offsetY);
+void PrintFrameBuffer(FrameBuffer *fb);
 void RasterizeTriange(FrameBuffer *fb, const Vec2 *v1, const Vec2 *v2, const Vec2 *v3);
 void RasterizerFree(FrameBuffer **fb);
 

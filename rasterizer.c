@@ -93,11 +93,11 @@ DepthBuffer GetPixelDepthFrameBuffer(FrameBuffer *fb, int posX, int posY)
     int index = (posY * fb->width) + posX;
     return fb->depthBuffer[index];
 }
-void PrintFrameBuffer(FrameBuffer *fb, int offsetX, int offsetY)
+void PrintFrameBuffer(FrameBuffer *fb)
 {
-    for(int y = offsetX; y < fb->height; y++)
+    for(int y = 0; y < fb->height; y++)
     {
-        for(int x = offsetX; x < fb->width; x++)
+        for(int x = 0; x < fb->width; x++)
         {
             ColorBuffer cb = GetPixelColorFrameBuffer(fb, x, y);
             if(!cb)

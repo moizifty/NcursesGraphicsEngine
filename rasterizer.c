@@ -7,6 +7,8 @@
 
 #include "rasterizer.h"
 
+static 
+
 bool PointInTriangle(int x, int y, const Vec2 *v1, const Vec2 *v2, const Vec2 *v3)
 {
     //from lectures
@@ -26,12 +28,27 @@ bool PointInTriangle(int x, int y, const Vec2 *v1, const Vec2 *v2, const Vec2 *v
            (wv3 <= 1.0f) && (wv3 >= 0.001f);
 
 }
-FrameBuffer *RasterizerInit(int fbWidth, int fbHeight)
+FrameBuffer **RasterizerInit(int fbWidth, int fbHeight)
 {
-    FrameBuffer *fbMalloc;
-    if(fbMalloc = malloc(sizeof(FrameBuffer)))
+    FrameBuffer **fbMalloc;
+    if(fbMalloc = malloc(sizeof(FrameBuffer *) * 2))
     {
-        RecreateFrameBuffer(fbMalloc, fbWidth, fbHeight);
+        if(fbMalloc[0] = malloc(sizeof(FrameBuffer)))
+            RecreateFrameBuffer(fbMalloc[0], fbWidth, fbHeight);
+        else
+        {
+            fprintf(stderr, "Could not malloc framebuffer\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if(fbMalloc[1] = malloc(sizeof(FrameBuffer)))
+            RecreateFrameBuffer(fbMalloc[1], fbWidth, fbHeight);
+        else
+        {
+            fprintf(stderr, "Could not malloc framebuffer\n");
+            exit(EXIT_FAILURE);
+        }
+
         return fbMalloc;
     }
     else
@@ -63,10 +80,16 @@ void ClearFrameBuffer(FrameBuffer *fb, int clearColor)
     memset(fb->colorBuffer, clearColor, sizeof(ColorBuffer) * fb->width * fb->height);
     memset(fb->depthBuffer, MAX_DEPTH, sizeof(DepthBuffer) * fb->width * fb->height);
 }
-void RasterizerFree(FrameBuffer **fb)
+void RasterizerFree(FrameBuffer ***fb)
 {
-    free((*fb)->colorBuffer);
-    free((*fb)->depthBuffer);
+    free((*fb)[0]->colorBuffer);
+    free((*fb)[0]->depthBuffer);
+
+    free((*fb)[1]->colorBuffer);
+    free((*fb)[1]->depthBuffer);
+
+    free((*fb)[0]);
+    free((*fb)[1]);
     free(*fb);
 }
 void SetPixelFrameBuffer(FrameBuffer *fb, int posX, int posY, ColorBuffer color, DepthBuffer depth)
@@ -93,13 +116,15 @@ DepthBuffer GetPixelDepthFrameBuffer(FrameBuffer *fb, int posX, int posY)
     int index = (posY * fb->width) + posX;
     return fb->depthBuffer[index];
 }
-void PrintFrameBuffer(FrameBuffer *fb)
+void PrintFrameBuffer(FrameBuffer *presentFrame, threadpool tpool, void *(*rcb)(void *))
 {
-    for(int y = 0; y < fb->height; y++)
+    thpool_add_work(tpool, rcb, NULL);
+    
+    for(int y = 0; y < presentFrame->height; y++)
     {
-        for(int x = 0; x < fb->width; x++)
+        for(int x = 0; x < presentFrame->width; x++)
         {
-            ColorBuffer cb = GetPixelColorFrameBuffer(fb, x, y);
+            ColorBuffer cb = GetPixelColorFrameBuffer(presentFrame, x, y);
             if(!cb)
                 continue;
 
@@ -107,6 +132,13 @@ void PrintFrameBuffer(FrameBuffer *fb)
             mvprintw(y, x, "%c", (char)cb); 
         }
     }
+    thpool_wait(tpool);
+}
+void SwapBuffers(FrameBuffer **presentFrame, FrameBuffer **renderFrame, FrameBuffer **frameBuffers, int *currentBuffer)
+{
+    *currentBuffer ^= 1;
+    *presentFrame = frameBuffers[*currentBuffer];
+    *renderFrame = frameBuffers[*currentBuffer ^ 1];
 }
 void RasterizeTriange(FrameBuffer *fb, const Vec2 *vv1, const Vec2 *vv2, const Vec2 *vv3)
 {

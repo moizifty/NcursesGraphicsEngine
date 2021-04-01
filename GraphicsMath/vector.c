@@ -172,6 +172,7 @@ void MultVec4(const Vec4 *a, const Vec4 *b, Vec4 *result)
 
 void LerpVec4(const Vec4 *a, const Vec4 *b, float t, Vec4 *result)
 {
+    t = Clamp(t, 0, 1);
     result->x = a->x + ((b->x - a->x) * t);
     result->y = a->y + ((b->y - a->y) * t);
     result->z = a->z + ((b->z - a->z) * t);

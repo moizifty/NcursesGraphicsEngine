@@ -11,7 +11,8 @@
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lm",
-                "-lncurses"
+                "-lncurses",
+                "-lpthread"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

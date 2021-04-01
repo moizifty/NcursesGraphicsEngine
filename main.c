@@ -5,8 +5,52 @@
 #include "GraphicsMath/graphicsmath.h"
 #include "rasterizer.h"
 
+#include "thpool.h"
+
 #define WinHeight (LINES)
 #define WinWidth  (COLS)
+
+float angle = 0;
+int currentFrameBuffer = 0;
+FrameBuffer *presentFrame;
+FrameBuffer *renderFrame;
+FrameBuffer **frameBuffers;
+
+void *
+RenderCallback(void *args)
+{
+    //always set transform matrix to identity, starrting off so i dont mess up transforms
+    Matrix44 transform =
+    {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+    };
+
+    Vec3 scale = {5, 1, 1};
+    Vec3 rotateAxis = {0, 1, 1};
+
+    //ScaleMatrix44(&transform, &scale);
+    RotateMatrix44(&transform, &rotateAxis, DegToRad(-angle));
+
+    Vec4 v4a = {-0.5, 0.5, 0, 1};
+    Vec4 v4b = {0.5, 0.5, 0, 1};
+    Vec4 v4c = {0, -0.5, 0, 1};
+
+    Vec4 v4ar, v4br, v4cr;
+    MultMatrix44Vec4(&transform, &v4a, &v4ar);
+    MultMatrix44Vec4(&transform, &v4b, &v4br);
+    MultMatrix44Vec4(&transform, &v4c, &v4cr);
+
+    ClearFrameBuffer(renderFrame, 0);
+    RasterizeTriange(renderFrame, 
+                    &(Vec2){v4ar.x, v4ar.y}, 
+                    &(Vec2){v4br.x, v4br.y},
+                    &(Vec2){v4cr.x, v4cr.y});
+    
+    angle += 0.05f;
+}
 
 int
 main(void)
@@ -18,49 +62,23 @@ main(void)
     start_color();
     cbreak();
 
-    FrameBuffer *fb = RasterizerInit(WinWidth / 2, WinHeight / 2);
+    threadpool tpool = thpool_init(8);
 
-    float angle = 0;
-
-    while (angle < 1000.0f)
+    frameBuffers = RasterizerInit(WinWidth, WinHeight);
+    SwapBuffers(&presentFrame, &renderFrame, frameBuffers, &currentFrameBuffer);
+   
+    while (true)
     {
-        //always set transform matrix to identity, starrting off so i dont mess up transforms
-        Matrix44 transform =
-        {
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1,
-        };
-
-        Vec3 scale = {5, 1, 1};
-        Vec3 rotateAxis = {0, 0, 1};
-
-        //ScaleMatrix44(&transform, &scale);
-        RotateMatrix44(&transform, &rotateAxis, DegToRad(-angle));
-
-        Vec4 v4a = {-1, 2, 1, 1};
-        Vec4 v4b = {1, 1, 1, 1};
-        Vec4 v4c = {0, -1, 1, 1};
-
-        Vec4 v4ar, v4br, v4cr;
-        MultMatrix44Vec4(&transform, &v4a, &v4ar);
-        MultMatrix44Vec4(&transform, &v4b, &v4br);
-        MultMatrix44Vec4(&transform, &v4c, &v4cr);
-
-        ClearFrameBuffer(fb, 0);
-        RasterizeTriange(fb, 
-                        &(Vec2){v4ar.x, v4ar.y}, 
-                        &(Vec2){v4br.x, v4br.y},
-                        &(Vec2){v4cr.x, v4cr.y});
-
-        PrintFrameBuffer(fb);
+        PrintFrameBuffer(presentFrame, tpool, RenderCallback);
+        //ClearFrameBuffer(presentFrame, 0);
+        SwapBuffers(&presentFrame, &renderFrame, frameBuffers, &currentFrameBuffer);
         refresh();
         erase();
-        angle += 0.05f;
     }
 
-    RasterizerFree(&fb);
+    RasterizerFree(&frameBuffers);
+    thpool_wait(tpool);
+    thpool_destroy(tpool);
     endwin();
 
     return 0;

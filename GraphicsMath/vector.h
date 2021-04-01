@@ -1,6 +1,7 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 #include <math.h>
+#include "mathextentions.h"
 
 typedef struct Vec2 
 {

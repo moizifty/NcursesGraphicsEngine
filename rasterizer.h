@@ -1,5 +1,6 @@
 #ifndef RASTERIZER_H
 #define RASTERIZER_H
+#include "thpool.h"
 #include "GraphicsMath/graphicsmath.h"
 
 //max depth of depth buffer
@@ -20,14 +21,16 @@ typedef struct FrameBuffer
 }FrameBuffer;
 
 
-FrameBuffer *RasterizerInit(int fbWidth, int fbHeight);
+FrameBuffer **RasterizerInit(int fbWidth, int fbHeight);
 void RecreateFrameBuffer(FrameBuffer *fb, int fbWidth, int fbHeight);
 void ClearFrameBuffer(FrameBuffer *fb, int clearColor);
 void SetPixelFrameBuffer(FrameBuffer *fb, int posX, int posY, ColorBuffer color, DepthBuffer depth);
 ColorBuffer GetPixelColorFrameBuffer(FrameBuffer *fb, int posX, int posY);
 DepthBuffer GetPixelDepthFrameBuffer(FrameBuffer *fb, int posX, int posY);
-void PrintFrameBuffer(FrameBuffer *fb);
+void PrintFrameBuffer(FrameBuffer *presentFrame, threadpool tpool, void *(*rcb)(void *));
 void RasterizeTriange(FrameBuffer *fb, const Vec2 *v1, const Vec2 *v2, const Vec2 *v3);
-void RasterizerFree(FrameBuffer **fb);
+void SwapBuffers(FrameBuffer **presentFrame, FrameBuffer **renderFrame, FrameBuffer **frameBuffers, int *currentBuffer);
+void RasterizerFree(FrameBuffer ***fb);
+
 
 #endif

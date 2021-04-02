@@ -52,6 +52,7 @@ RenderCallback(void *args)
     angle += 0.05f;
 }
 
+
 int
 main(void)
 {
@@ -62,14 +63,12 @@ main(void)
     start_color();
     cbreak();
 
-    threadpool tpool = thpool_init(8);
-
-    frameBuffers = RasterizerInit(WinWidth, WinHeight);
+    frameBuffers = RasterizerInit(WinWidth, WinHeight, RenderCallback);
     SwapBuffers(&presentFrame, &renderFrame, frameBuffers, &currentFrameBuffer);
    
     while (true)
     {
-        PrintFrameBuffer(presentFrame, tpool, RenderCallback);
+        PrintFrameBuffer(presentFrame);
         //ClearFrameBuffer(presentFrame, 0);
         SwapBuffers(&presentFrame, &renderFrame, frameBuffers, &currentFrameBuffer);
         refresh();
@@ -77,8 +76,6 @@ main(void)
     }
 
     RasterizerFree(&frameBuffers);
-    thpool_wait(tpool);
-    thpool_destroy(tpool);
     endwin();
 
     return 0;

@@ -7,7 +7,23 @@
 
 #include "rasterizer.h"
 
-static 
+static pthread_t renderThreadID;
+bool programRunning, renderStart, renderFinish;
+
+static void *
+RenderThread(void *(*rcb)(void *))
+{
+    while(programRunning)
+    {
+        if(renderStart)
+        {
+            renderStart = false;
+            renderFinish = false;
+            rcb(NULL);
+            renderFinish = true;
+        }
+    }
+}
 
 bool PointInTriangle(int x, int y, const Vec2 *v1, const Vec2 *v2, const Vec2 *v3)
 {
@@ -28,7 +44,7 @@ bool PointInTriangle(int x, int y, const Vec2 *v1, const Vec2 *v2, const Vec2 *v
            (wv3 <= 1.0f) && (wv3 >= 0.001f);
 
 }
-FrameBuffer **RasterizerInit(int fbWidth, int fbHeight)
+FrameBuffer **RasterizerInit(int fbWidth, int fbHeight, void *(*rcb)(void *))
 {
     FrameBuffer **fbMalloc;
     if(fbMalloc = malloc(sizeof(FrameBuffer *) * 2))
@@ -48,6 +64,10 @@ FrameBuffer **RasterizerInit(int fbWidth, int fbHeight)
             fprintf(stderr, "Could not malloc framebuffer\n");
             exit(EXIT_FAILURE);
         }
+
+        programRunning = true;
+        renderFinish = renderStart = false;
+        pthread_create(&renderThreadID, NULL, RenderThread, rcb);
 
         return fbMalloc;
     }
@@ -116,10 +136,10 @@ DepthBuffer GetPixelDepthFrameBuffer(FrameBuffer *fb, int posX, int posY)
     int index = (posY * fb->width) + posX;
     return fb->depthBuffer[index];
 }
-void PrintFrameBuffer(FrameBuffer *presentFrame, threadpool tpool, void *(*rcb)(void *))
+void PrintFrameBuffer(FrameBuffer *presentFrame)
 {
-    thpool_add_work(tpool, rcb, NULL);
-    
+    //thpool_add_work(tpool, rcb, NULL);
+    renderStart = true;
     for(int y = 0; y < presentFrame->height; y++)
     {
         for(int x = 0; x < presentFrame->width; x++)
@@ -132,7 +152,8 @@ void PrintFrameBuffer(FrameBuffer *presentFrame, threadpool tpool, void *(*rcb)(
             mvprintw(y, x, "%c", (char)cb); 
         }
     }
-    thpool_wait(tpool);
+    //thpool_wait(tpool);
+    while(!renderFinish);
 }
 void SwapBuffers(FrameBuffer **presentFrame, FrameBuffer **renderFrame, FrameBuffer **frameBuffers, int *currentBuffer)
 {
